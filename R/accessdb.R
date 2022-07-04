@@ -151,9 +151,9 @@ am_sources <- function(ordered = TRUE) {
 
 am_series <- function(dsid = NULL, source.info = TRUE, ordered = TRUE, return.query = FALSE) {
   if(source.info) {
-    query <- "SELECT DSID, Series, Label, Topic, S_Frequency, S_From, S_To, Updated, Source, S_Description, S_Source, S_Url FROM SERIES NATURAL JOIN DATASOURCE" # , DS_Url
+    query <- "SELECT DSID, Series, Label, Topic, S_Frequency, S_From, S_To, Nctry, Avg_Obs, Updated, Source, S_Description, S_Source, S_Url FROM SERIES NATURAL JOIN DATASOURCE" # , DS_Url
   } else {
-    query <- "SELECT Series, Label, Topic, S_Frequency, S_From, S_To, S_Description, S_Source, S_Url FROM SERIES"
+    query <- "SELECT Series, Label, Topic, S_Frequency, S_From, S_To, Nctry, Avg_Obs, S_Description, S_Source, S_Url FROM SERIES"
   }
   if(length(dsid)) {
     query <- if(length(dsid) == 1L) paste0(query, " WHERE DSID = '", dsid, if(ordered) "' ORDER BY S_Order" else "'") else
