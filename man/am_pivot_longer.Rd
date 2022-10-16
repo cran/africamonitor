@@ -12,6 +12,8 @@ am_pivot_longer(
   value_name = "Value",
   label_name = "Label",
   na.rm = TRUE,
+  variable.factor = TRUE,
+  label.factor = TRUE,
   ...
 )
 }
@@ -29,6 +31,8 @@ am_pivot_longer(
 \item{label_name}{character. The name of the variable to store the series labels.}
 
 \item{na.rm}{logical. \code{TRUE} will remove all missing values from the long data frame.}
+
+\item{variable.factor, label.factor}{logical. \code{TRUE} will code the "Series" and "Label" columns as factors, which is more memory efficient.}
 
 \item{\dots}{further arguments passed to \code{\link[data.table]{melt}}.}
 }

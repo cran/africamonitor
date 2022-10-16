@@ -461,21 +461,18 @@ am_pivot_wider <- function(data, id_cols = intersect(c("ISO3", .AMT), names(data
                       labels_from = if(any(names(data) == "Label")) "Label" else NULL,
                       expand.date = FALSE, ...) {
   # Needed for columns to be cast in order...
-  if(length(names_from) > 1L) {
-    data[, names_from] <- lapply(.subset(data, names_from), function(x) factor(x, levels = funique(x, method = "hash")))
-  } else {
-    data[[names_from]] <- factor(.subset2(data, names_from), levels = funique(.subset2(data, names_from), method = "hash"))
-  }
-  if(anyDuplicated(get_vars(data, c(names_from, id_cols))))
-    data <- collapv(data, c(names_from, id_cols), fmedian, ffirst, sort = FALSE, na.rm = FALSE)
+  settransformv(data, names_from, qF, sort = FALSE)
+  # if(fnunique(get_vars(data, c(names_from, id_cols))) != fnrow(data))
+  #  data <- collapv(data, c(names_from, id_cols), fmedian, ffirst, sort = FALSE, na.rm = FALSE)
   form <- as.formula(paste0(paste_clp(id_cols), " ~ ", paste_clp(names_from)))
-  res <- dcast(qDT(data), form, value.var = values_from, fill = NA, ...) # , fun.aggregate = median, na.rm = TRUE
+  res <- dcast(qDT(data), form, value.var = values_from, sep = "_", ...) # , fun.aggregate = median, na.rm = TRUE
   if(length(labels_from)) {
     noid <- -seq_along(id_cols)
     namlab <- funique(.subset(data, c(names_from, labels_from)))
     nam <- if(length(names_from) == 1L) namlab[[1L]] else
       do.call(paste, c(namlab[names_from], list(sep = "_"))) # make sure sep is same as dcast...
-    vlabels(res)[noid] <- namlab[[labels_from]][ckmatch(names(res)[noid], nam)]
+    lab <- namlab[[labels_from]][ckmatch(names(res)[noid], nam)]
+    vlabels(res)[noid] <- if(is.character(lab)) lab else as.character(lab)
   }
   if(expand.date) return(am_expand_date(res, ...)) else return(res)
 }
@@ -496,6 +493,7 @@ paste_clp <- function(x) if(length(x) == 1L) x else paste(x, collapse = " + ")
 #' @param value_name character. The name of the variable to store the data values.
 #' @param label_name character. The name of the variable to store the series labels.
 #' @param na.rm logical. \code{TRUE} will remove all missing values from the long data frame.
+#' @param variable.factor,label.factor logical. \code{TRUE} will code the "Series" and "Label" columns as factors, which is more memory efficient.
 #' @param \dots further arguments passed to \code{\link[data.table]{melt}}.
 #'
 #' @return A \code{\link[data.table]{data.table}} with the reshaped data.
@@ -513,15 +511,23 @@ paste_clp <- function(x) if(length(x) == 1L) x else paste(x, collapse = " + ")
 am_pivot_longer <- function(data, id_cols = intersect(c("ISO3", .AMT), names(data)),
                       to_value = setdiff(names(data), id_cols),
                       variable_name = "Series", value_name = "Value",
-                      label_name = "Label", na.rm = TRUE, ...) {
-  if(length(label_name)) labs <- vlabels(unattrib(.subset(data, to_value)))
+                      label_name = "Label", na.rm = TRUE, variable.factor = TRUE,
+                      label.factor = TRUE, ...) {
+  if(length(label_name)) labs <- vlabels(.subset(data, to_value), use.names = FALSE)
   res <- melt(qDT(data), id_cols, to_value, variable_name, value_name,
-              na.rm = na.rm, variable.factor = FALSE, ...)
+              na.rm = na.rm, variable.factor = variable.factor, ...)
   vlabels(res) <- NULL # needed
   if(length(label_name) && !allNA(labs)) {
-    # melt always preserves column order (otherwise could rep with names and match series column)
-    labs <- if(na.rm) rep(labs, fnobs(.subset(data, to_value))) else
-                      rep(labs, each = fnrow(data))
+    if(label.factor) {
+      al <- list(levels = labs, class = "factor")
+      labs <- if(na.rm) rep(seq_along(labs), fnobs(.subset(data, to_value))) else
+                        rep(seq_along(labs), each = fnrow(data))
+      attributes(labs) <- al
+    } else {
+      # melt always preserves column order (otherwise could rep with names and match series column)
+      labs <- if(na.rm) rep(labs, fnobs(.subset(data, to_value))) else
+                        rep(labs, each = fnrow(data))
+    }
     add_vars(res, fncol(res)) <- setNames(list(labs), label_name)
   }
   return(res)
