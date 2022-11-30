@@ -7,7 +7,7 @@
 am_as_date(x, end = FALSE, origin = "1899-12-30")
 }
 \arguments{
-\item{x}{a character date string \code{"YYYY-MM-DD"} or \code{"YYYY-MM"}, year-quarter \code{"YYYYQN"} or \code{"YYYY-QN"}, , year-month \code{"YYYYMNN"} or \code{"YYYY-MNN"}, fiscal year \code{"YYYY/YY"} or calendar year \code{YYYY} (numeric or character), or a numeric value corresponding to a date that can be passed to \code{\link[base]{as.Date.numeric}}.}
+\item{x}{a character date string \code{"YYYY-MM-DD"} or \code{"YYYY-MM"}, year-quarter \code{"YYYYQN"} or \code{"YYYY-QN"}, year-month \code{"YYYYMNN"} or \code{"YYYY-MNN"}, fiscal year \code{"YYYY/YY"} or calendar year \code{YYYY} (numeric or character), or a numeric value corresponding to a date that can be passed to \code{\link[base]{as.Date.numeric}}.}
 
 \item{end}{logical. \code{TRUE} replaces missing time information with a period end-date which is the last day of the period. \code{FALSE} replaces missing month and day information with \code{"-01"},
 so the year date is the 1st of January, the fiscal year date the 1st of July, and for months / quarters the 1st day of the month / quarter.}

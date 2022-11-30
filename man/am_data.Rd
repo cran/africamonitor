@@ -5,7 +5,7 @@
 \title{Retrieve Data from the Database}
 \usage{
 am_data(
-  ctry = NULL,
+  ctry = africamonitor::am_countries$ISO3,
   series = NULL,
   from = NULL,
   to = NULL,
@@ -19,7 +19,7 @@ am_data(
 )
 }
 \arguments{
-\item{ctry}{character. (Optional) the ISO3 code of African countries (see \code{\link{am_countries}}).}
+\item{ctry}{character. (Optional) the ISO3 code of countries (see \code{\link{am_countries}}).}
 
 \item{series}{character. (Optional) codes of series matching the 'Series' column of the series table (retrieved using \code{\link[=am_series]{am_series()}}).}
 

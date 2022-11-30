@@ -3,9 +3,10 @@
 \docType{data}
 \name{am_countries}
 \alias{am_countries}
+\alias{am_countries_wld}
 \title{Dataset of Countries in the Database}
 \format{
-A data frame with 55 rows and 9 variables:
+A data frame with 55 (wld = 195) rows and 9 variables (sorted by Country):
 \describe{
   \item{Country}{Short Country Name}
   \item{Country_ISO}{ISO Standardized Country Name}
@@ -17,18 +18,24 @@ A data frame with 55 rows and 9 variables:
   \item{Region_Detailed}{5-Region Classification (Former World Bank)}
   \item{Currency}{Main Official Currency}
 }
+
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 195 rows and 9 columns.
 }
 \source{
 \href{https://CRAN.R-project.org/package=countrycode}{countrycode} R package (with some modification of regional aggregates).
 }
 \usage{
 am_countries
+
+am_countries_wld
 }
 \description{
-A dataset containing standardized codes of African countries
-for which data is provided according to various classifications
-and regional aggregations. Note that the API (\code{\link{am_data}})
-only supports "ISO3" character codes.
+\code{am_countries} is a data.frame containing standardized codes of 55 African countries
+(including Western Sahara) according to various classifications
+and regional aggregations. \code{am_countries_wld} provides the same information for 195
+countries, which includes the 193 UN Member States, Western Sahara and Taiwan. The API
+generally provides data for all 195 countries, but by default only requests data for Africa.
+Note that the API (\code{\link{am_data}}) only supports "ISO3" character codes.
 }
 \examples{
 head(am_countries)

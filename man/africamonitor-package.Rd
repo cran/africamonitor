@@ -16,6 +16,7 @@ Functions and data providing information about the available data
 \code{\link[=am_sources]{am_sources()}}\cr
 \code{\link[=am_series]{am_series()}}\cr
 \code{\link{am_countries}}\cr
+\code{\link{am_countries_wld}}\cr
 \code{\link{am_entities}}
 
 Function to retrieve the data from the database

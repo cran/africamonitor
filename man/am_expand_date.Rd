@@ -12,11 +12,12 @@ am_expand_date(
   remove.missing.date = TRUE,
   sort = TRUE,
   as.factor = TRUE,
+  name = "Date",
   ...
 )
 }
 \arguments{
-\item{x}{either a vector of class 'Date', or coercible to date using \code{\link[base]{as.Date}}, or a data frame / list containing with variable named 'Date'.}
+\item{x}{either a vector of class 'Date', or coercible to date using \code{\link[base]{as.Date}}, or a data frame / list containing with a date-column called \code{name}.}
 
 \item{gen}{character. A vector of identifiers to generate from \code{x}. The possible identifiers are found in \code{\link{.AMT}}.}
 
@@ -24,11 +25,13 @@ am_expand_date(
 
 \item{keep.date}{logical. \code{TRUE} will keep the date variable in the resulting dataset, \code{FALSE} will remove the date variable in favor of the generated identifiers.}
 
-\item{remove.missing.date}{logical. \code{TRUE} will remove missing values in \code{x}. If \code{x} is a dataset, rows missing the 'Date' variable will be removed.}
+\item{remove.missing.date}{logical. \code{TRUE} will remove missing values in \code{x}. If \code{x} is a dataset, rows missing the date variable will be removed.}
 
-\item{sort}{logical. \code{TRUE} will sort the data by the 'Date' column.}
+\item{sort}{logical. \code{TRUE} will sort the data by the date column.}
 
-\item{as.factor}{\code{TRUE} will generate quarters, fiscal years and months ('Quarter', 'FY', 'QFY', 'Month') as factor variables. It is also possible to use \code{as.factor = "ordered"} to generate ordered factors.
+\item{as.factor}{\code{TRUE} will generate quarters, fiscal years and months ('Quarter', 'FY', 'QFY', 'Month') as factor variables. It is also possible to use \code{as.factor = "ordered"} to generate ordered factors.}
+
+\item{name}{character. The name of the date variable to expand.
 \code{FALSE} will generate fiscal years as character and quarters and months as integer variables.}
 
 \item{\dots}{not used.}

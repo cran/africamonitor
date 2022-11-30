@@ -32,12 +32,14 @@
 
 #' Dataset of Countries in the Database
 #'
-#' A dataset containing standardized codes of African countries
-#' for which data is provided according to various classifications
-#' and regional aggregations. Note that the API (\code{\link{am_data}})
-#' only supports "ISO3" character codes.
+#' \code{am_countries} is a data.frame containing standardized codes of 55 African countries
+#' (including Western Sahara) according to various classifications
+#' and regional aggregations. \code{am_countries_wld} provides the same information for 195
+#' countries, which includes the 193 UN Member States, Western Sahara and Taiwan. The API
+#' generally provides data for all 195 countries, but by default only requests data for Africa.
+#' Note that the API (\code{\link{am_data}}) only supports "ISO3" character codes.
 #'
-#' @format A data frame with 55 rows and 9 variables:
+#' @format A data frame with 55 (wld = 195) rows and 9 variables (sorted by Country):
 #' \describe{
 #'   \item{Country}{Short Country Name}
 #'   \item{Country_ISO}{ISO Standardized Country Name}
@@ -54,6 +56,9 @@
 #' @examples
 #' head(am_countries)
 "am_countries"
+
+#' @rdname am_countries
+"am_countries_wld"
 
 #' Dataset of African Economic and Regional Entities
 #'
@@ -91,7 +96,10 @@ am_reconnect <- function() {
 
 safe_query <- function(query) {
   if(is.null(.am_con)) am_reconnect() # Initial connection
-  tryCatch(dbGetQuery(.am_con, query), error = function(e) {am_reconnect(); dbGetQuery(.am_con, query)})
+  tryCatch(dbGetQuery(.am_con, query), error = function(e) {
+    am_reconnect()
+    tryCatch(dbGetQuery(.am_con, query), error = function(e) NULL)
+  })
 }
 
 #' Retrieve Data Sources Table
@@ -112,7 +120,10 @@ am_sources <- function(ordered = TRUE) {
   query <- "SELECT DSID, Source, Url, NSeries, Frequency, Data_From, Data_To, Description, Updated, Access FROM DATASOURCE"
   if(ordered) query <- paste(query, "ORDER BY DS_Order")
   res <- safe_query(query)
-  if(!fnrow(res)) stop("Query resulted in empty dataset. This means something is wrong with your internet connection, the connection to the database or with the database itself.")
+  if(is.null(res) || !fnrow(res)) {
+    message("Query resulted in empty dataset. This means something is wrong with your internet connection, the connection to the database or with the database itself.")
+    return(res)
+  }
   res$Data_From <- as.Date(res$Data_From)
   res$Data_To <- as.Date(res$Data_To)
   res$Updated <- as.Date(res$Updated)
@@ -162,7 +173,10 @@ am_series <- function(dsid = NULL, source.info = TRUE, ordered = TRUE, return.qu
 
   if(return.query) return(query)
   res <- safe_query(query)
-  if(!fnrow(res)) stop("Query resulted in empty dataset. Please make sure the DSID exists by checking against the am_sources() table. Alternatively check your connection to the database.")
+  if(is.null(res) || !fnrow(res)) {
+    message("Query resulted in empty dataset. Please make sure the DSID exists by checking against the am_sources() table. Alternatively check your connection to the database.")
+    return(res)
+  }
 
   res$S_From <- as.Date(res$S_From)
   res$S_To <- as.Date(res$S_To)
@@ -176,13 +190,14 @@ am_series <- function(dsid = NULL, source.info = TRUE, ordered = TRUE, return.qu
 #'
 #' This function expands a date column and generates additional temporal identifiers from it (such as the year, month, quarter, fiscal year etc.).
 #'
-#' @param x either a vector of class 'Date', or coercible to date using \code{\link[base]{as.Date}}, or a data frame / list containing with variable named 'Date'.
+#' @param x either a vector of class 'Date', or coercible to date using \code{\link[base]{as.Date}}, or a data frame / list containing with a date-column called \code{name}.
 #' @param gen character. A vector of identifiers to generate from \code{x}. The possible identifiers are found in \code{\link{.AMT}}.
 #' @param origin character / Date. Passed to \code{\link[base]{as.Date}}: for converting numeric \code{x} to date.
 #' @param keep.date logical. \code{TRUE} will keep the date variable in the resulting dataset, \code{FALSE} will remove the date variable in favor of the generated identifiers.
-#' @param remove.missing.date logical. \code{TRUE} will remove missing values in \code{x}. If \code{x} is a dataset, rows missing the 'Date' variable will be removed.
-#' @param sort logical. \code{TRUE} will sort the data by the 'Date' column.
+#' @param remove.missing.date logical. \code{TRUE} will remove missing values in \code{x}. If \code{x} is a dataset, rows missing the date variable will be removed.
+#' @param sort logical. \code{TRUE} will sort the data by the date column.
 #' @param as.factor \code{TRUE} will generate quarters, fiscal years and months ('Quarter', 'FY', 'QFY', 'Month') as factor variables. It is also possible to use \code{as.factor = "ordered"} to generate ordered factors.
+#' @param name character. The name of the date variable to expand.
 #' \code{FALSE} will generate fiscal years as character and quarters and months as integer variables.
 #' @param \dots not used.
 #'
@@ -206,7 +221,7 @@ am_series <- function(dsid = NULL, source.info = TRUE, ordered = TRUE, return.qu
 
 am_expand_date <- function(x, gen = c("Year", "Quarter", "Month"), origin = "1899-12-30",
                         keep.date = TRUE, remove.missing.date = TRUE, sort = TRUE,
-                        as.factor = TRUE, ...) {
+                        as.factor = TRUE, name = "Date", ...) {
   lxl <- FALSE
   genopts <- c('Year', 'Quarter', 'FY', 'QFY', 'Month', 'Day')
   genlab <- c('Year', 'Quarter', 'Fiscal Year (July - June)', 'Quarter of Fiscal Year', 'Month', 'Day')
@@ -221,7 +236,7 @@ am_expand_date <- function(x, gen = c("Year", "Quarter", "Month"), origin = "189
 
   if(is.list(x)) {
     lxl <- TRUE
-    ind <- ckmatch("Date", names(x), "No column named:")
+    ind <- ckmatch(name, names(x), "No column named:")
     l <- .subset(x, -ind)
     x <- .subset2(x, ind)
   }
@@ -275,7 +290,7 @@ am_expand_date <- function(x, gen = c("Year", "Quarter", "Month"), origin = "189
 #' This function coerces date strings i.e. \code{"YYYY-MM-DD"} or \code{"YYYY-MM"}, years e.g. \code{2015} (numeric or character),
 #' year-quarters e.g. \code{"2015Q1"} or \code{"2015-Q1"}, year-months e.g. \code{"2015M01"} or \code{"2015-M01"}, fiscal years e.g. \code{"1997/98"} or numeric values representing dates (e.g. previously imported Excel date) to a regular R date.
 #'
-#' @param x a character date string \code{"YYYY-MM-DD"} or \code{"YYYY-MM"}, year-quarter \code{"YYYYQN"} or \code{"YYYY-QN"}, , year-month \code{"YYYYMNN"} or \code{"YYYY-MNN"}, fiscal year \code{"YYYY/YY"} or calendar year \code{YYYY} (numeric or character), or a numeric value corresponding to a date that can be passed to \code{\link[base]{as.Date.numeric}}.
+#' @param x a character date string \code{"YYYY-MM-DD"} or \code{"YYYY-MM"}, year-quarter \code{"YYYYQN"} or \code{"YYYY-QN"}, year-month \code{"YYYYMNN"} or \code{"YYYY-MNN"}, fiscal year \code{"YYYY/YY"} or calendar year \code{YYYY} (numeric or character), or a numeric value corresponding to a date that can be passed to \code{\link[base]{as.Date.numeric}}.
 #' @param end logical. \code{TRUE} replaces missing time information with a period end-date which is the last day of the period. \code{FALSE} replaces missing month and day information with \code{"-01"},
 #' so the year date is the 1st of January, the fiscal year date the 1st of July, and for months / quarters the 1st day of the month / quarter.
 #' @param origin a date or date-string that can be used as reference for converting numeric values to dates. The default corresponds to dates generated in Excel for Windows. See \code{\link[base]{as.Date.numeric}}.
@@ -297,7 +312,7 @@ am_as_date <- function(x, end = FALSE, origin = "1899-12-30") {
   ncx <- nchar(x1)
   if(ncx == 4L) return(as.Date(paste0(x, if(end) "-12-31" else "-01-01")))
   if(is.numeric(x)) return(as.Date.numeric(x, origin))
-  if(ncx >= 6L || ncx <= 8L) { # could be "1999/1"
+  if(ncx >= 6L && ncx <= 8L) { # could be "1999/1"
     s5 <- substr(x1, 5L, 5L)
     if(s5 == "/") {
       x <- if(end) paste0(as.integer(substr(x, 1L, 4L)) + 1L, "-06-30") else
@@ -312,9 +327,9 @@ am_as_date <- function(x, end = FALSE, origin = "1899-12-30") {
         M <- substr(x, st, st + 1L)
         x <- paste0(substr(x, 1L, 4L), "-", M, "-01")
       } else { # Assuming now Year-Month type string
-        x <- as.Date(if(ncx == 8L) x else paste0(x, "-01"))
+        if(ncx != 8L) x <- paste0(x, "-01")
       }
-      if(end) x <- as.Date(format(x + 31L, "%Y-%m-01")) - 1L
+      if(end) return(as.Date(format(as.Date(x) + 31L, "%Y-%m-01")) - 1L)
     }
   }
   return(as.Date(x))
@@ -325,7 +340,7 @@ am_as_date <- function(x, end = FALSE, origin = "1899-12-30") {
 #'
 #' This is the main function of the package to retrieve data from the database. % It constructs an SQL query which is sent to the database and returns the data as a \code{\link[data.table]{data.table}} in R.
 #'
-#' @param ctry character. (Optional) the ISO3 code of African countries (see \code{\link{am_countries}}).
+#' @param ctry character. (Optional) the ISO3 code of countries (see \code{\link{am_countries}}).
 #' @param series character. (Optional) codes of series matching the 'Series' column of the series table (retrieved using \code{\link[=am_series]{am_series()}}).
 #' @param from set the start time of the data retrieved by either supplying a start date, a date-string of the form \code{"YYYY-MM-DD"} or \code{"YYYY-MM"},
 #' year-quarters of the form \code{"YYYYQN"} or \code{"YYYY-QN"}, a numeric year \code{YYYY} (numeric or character), or a fiscal year of the form \code{"YYYY/YY"}. These expressions are converted to a regular date by \code{\link{am_as_date}}.
@@ -380,13 +395,14 @@ am_as_date <- function(x, end = FALSE, origin = "1899-12-30") {
 #' @export am_data
 #'
 
-am_data <- function(ctry = NULL, series = NULL, from = NULL, to = NULL, # , dsid = NULL
+am_data <- function(ctry = africamonitor::am_countries$ISO3,
+                    series = NULL, from = NULL, to = NULL, # , dsid = NULL
                     labels = TRUE, wide = TRUE, expand.date = FALSE, drop.1iso3c = TRUE,
                     ordered = TRUE, return.query = FALSE, ...) {
 
   c0 <- is.null(ctry)
   s0 <- is.null(series)
-  if(!c0 && anyDuplicated(ctry)) stop("duplicated country code: ", paste(series[duplicated(ctry)], collapse = ", "))
+  if(!c0 && anyDuplicated(ctry)) stop("duplicated country code: ", paste(ctry[duplicated(ctry)], collapse = ", "))
   if(!s0 && anyDuplicated(series)) stop("duplicated series code: ", paste(series[duplicated(series)], collapse = ", "))
   if(labels) {
      data <- "DATA NATURAL JOIN SERIES"
@@ -401,7 +417,7 @@ am_data <- function(ctry = NULL, series = NULL, from = NULL, to = NULL, # , dsid
      if(ordered) ord <- if(labels) "S_Order, Date" else "Series, Date"
   } else {
      cond <- if(c0) "" else paste0("ISO3 IN ('", paste(ctry, collapse = "', '"), "')")
-     vars <- paste0("Date, ISO3, Series", lab,", Value")
+     vars <- paste0("ISO3, Date, Series", lab,", Value")
      if(ordered) ord <- if(labels) "ISO3, S_Order, Date" else "ISO3, Series, Date"
   }
   if(!s0) {
@@ -421,7 +437,10 @@ am_data <- function(ctry = NULL, series = NULL, from = NULL, to = NULL, # , dsid
                        paste("SELECT", vars, "FROM", data, where, cond)
   if(return.query) return(query)
   res <- safe_query(query)
-  if(!fnrow(res)) stop("Query resulted in empty dataset. Please make sure that the ISO3, series-codes or the date-range supplied in your query are consistent with the available data. See am_sources() and am_series(). Alternatively check your connection to the database.")
+  if(is.null(res) || !fnrow(res)) {
+    message("Query resulted in empty dataset. Please make sure that the ISO3, series-codes or the date-range supplied in your query are consistent with the available data. See am_sources() and am_series(). Alternatively check your connection to the database.")
+    return(res)
+  }
   res$Date <- as.Date(res$Date)
   setDT(res)
   if(wide) {
@@ -461,7 +480,7 @@ am_pivot_wider <- function(data, id_cols = intersect(c("ISO3", .AMT), names(data
                       labels_from = if(any(names(data) == "Label")) "Label" else NULL,
                       expand.date = FALSE, ...) {
   # Needed for columns to be cast in order...
-  settransformv(data, names_from, qF, sort = FALSE)
+  data <- ftransformv(data, names_from, qF, sort = FALSE)
   # if(fnunique(get_vars(data, c(names_from, id_cols))) != fnrow(data))
   #  data <- collapv(data, c(names_from, id_cols), fmedian, ffirst, sort = FALSE, na.rm = FALSE)
   form <- as.formula(paste0(paste_clp(id_cols), " ~ ", paste_clp(names_from)))
