@@ -1,6 +1,6 @@
-848dda3210038290dfca99f68b8f25b7 *DESCRIPTION
+64ce797827f50d1df5360f26e94e7552 *DESCRIPTION
 9ca078d589e1368fcc989e85dbdfc4a8 *NAMESPACE
-dd38e1af4fe949ec5cd966aabb19a58e *NEWS.md
+dbfed87df8d8e7ae183cde19ac5dd30c *NEWS.md
 ce08a9e81a928bef85c320aa94c23035 *R/accessdb.R
 4795cd82514ef614ccc112aa6488822b *R/africamonitor.R
 5a5037f4a7e9d64be069f53a2884fe91 *data/am_countries.rda
@@ -18,4 +18,4 @@ c0c3e673ffaa097228c24449ce15c564 *man/am_pivot_wider.Rd
 14a9bed5beffbe51ae1c84740c795f12 *man/am_sources.Rd
 a1f75a084f60dfa733c20d7d1ee28db7 *man/dot-AMID.Rd
 d2c59104d668fb3b2f51fe291f6ac76b *tests/testthat.R
-34b67cf6fb8e9436883c1ccd30a6f2f5 *tests/testthat/test-accessdb.R
+ba10bc76cad14b56965a7348570aae9b *tests/testthat/test-accessdb.R

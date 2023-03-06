@@ -1,4 +1,9 @@
+# africamonitor 0.2.3
+
+- Ensured that tests fail gracefully if database is not available. 
+
 # africamonitor 0.2.2
+
 - The database was expanded to include data for all 195 countries (where available), which includes the 193 UN Member States, Western Sahara and Taiwan, to allow comparison with Africa. A new dataset `countries_wld` was added providing codes for all 195 countries. The default behavior of the package is not changed i.e. if no country codes are supplied, `am_data()` retrieves data for all African countries.
 
 - The package fails gracefully i.e. without error if the database is not available.
