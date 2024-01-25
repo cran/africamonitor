@@ -197,8 +197,8 @@ am_series <- function(dsid = NULL, source.info = TRUE, ordered = TRUE, return.qu
 #' @param remove.missing.date logical. \code{TRUE} will remove missing values in \code{x}. If \code{x} is a dataset, rows missing the date variable will be removed.
 #' @param sort logical. \code{TRUE} will sort the data by the date column.
 #' @param as.factor \code{TRUE} will generate quarters, fiscal years and months ('Quarter', 'FY', 'QFY', 'Month') as factor variables. It is also possible to use \code{as.factor = "ordered"} to generate ordered factors.
-#' @param name character. The name of the date variable to expand.
 #' \code{FALSE} will generate fiscal years as character and quarters and months as integer variables.
+#' @param name character. The name of the date variable to expand.
 #' @param \dots not used.
 #'
 #' @return A \code{\link[data.table]{data.table}} containing the computed identifiers as columns. See Examples.
@@ -257,7 +257,7 @@ am_expand_date <- function(x, gen = c("Year", "Quarter", "Month"), origin = "189
   if(!inherits(x, "Date"))
     x <- if(is.numeric(x)) as.Date(x, origin) else as.Date(x)
   if(remove.missing.date && anyNA(x)) {
-    nna <- which(!is.na(x))
+    nna <- whichNA(x, invert = TRUE)
     x <- x[nna]
     if(lxl) l <- ss(l, nna)
   }
@@ -340,7 +340,7 @@ am_as_date <- function(x, end = FALSE, origin = "1899-12-30") {
 #'
 #' This is the main function of the package to retrieve data from the database. % It constructs an SQL query which is sent to the database and returns the data as a \code{\link[data.table]{data.table}} in R.
 #'
-#' @param ctry character. (Optional) the ISO3 code of countries (see \code{\link{am_countries}}).
+#' @param ctry character. (Optional) the ISO3 code of countries (see \code{\link{am_countries}}). Default is to load data for all African countries. Putting \code{NULL} gets data for all countries (codes available in \code{\link{am_countries_wld}}).
 #' @param series character. (Optional) codes of series matching the 'Series' column of the series table (retrieved using \code{\link[=am_series]{am_series()}}).
 #' @param from set the start time of the data retrieved by either supplying a start date, a date-string of the form \code{"YYYY-MM-DD"} or \code{"YYYY-MM"},
 #' year-quarters of the form \code{"YYYYQN"} or \code{"YYYY-QN"}, a numeric year \code{YYYY} (numeric or character), or a fiscal year of the form \code{"YYYY/YY"}. These expressions are converted to a regular date by \code{\link{am_as_date}}.
@@ -352,7 +352,7 @@ am_as_date <- function(x, end = FALSE, origin = "1899-12-30") {
 #' @param ordered logical. \code{TRUE} orders the result by 'Date' and, if \code{labels = TRUE}, by series, maintaining a fixed column-order of series.
 #' \code{FALSE} returns the result in a random order, to the benefit of faster query execution.
 #' @param return.query logical. \code{TRUE} will not query the database but instead return the constructed SQL query as a character string (for debugging purposes).
-#' @param \dots further arguments passed to \code{\link{am_pivot_wider}} (if \code{wide = TRUE}) or \code{\link{am_expand_date}} (if \code{expand.date = TRUE}), no conflicts between these two.
+#' @param \dots further arguments passed to \code{\link{am_pivot_wider}} (if \code{wide = TRUE}) or \code{\link{am_expand_date}} (if \code{expand.date = TRUE}).
 #'
 #' @details If \code{labels = FALSE}, the series table is not joined to the data table, and \code{ordered = TRUE} will order series retrieved in alphabetic order.
 #' If \code{labels = TRUE} data is ordered by series and date, preserving the order of columns in the dataset. If multiple countries are received they are ordered alphabetically according to the 'ISO3' column.
@@ -462,7 +462,7 @@ am_data <- function(ctry = africamonitor::am_countries$ISO3,
 #' @param values_from character. The column containing the data values.
 #' @param labels_from character. The column containing the labels describing the series.
 #' @param expand.date logical. \code{TRUE} will call \code{\link{am_expand_date}} on the data after reshaping.
-#' @param \dots further arguments passed to \code{\link[data.table]{dcast}} or \code{\link{am_expand_date}}, no conflicts between these two.
+#' @param \dots further arguments passed to \code{\link[collapse]{pivot}} or \code{\link{am_expand_date}}.
 #'
 #' @return A \code{\link[data.table]{data.table}} with the reshaped data.
 #'
@@ -479,25 +479,20 @@ am_pivot_wider <- function(data, id_cols = intersect(c("ISO3", .AMT), names(data
                       names_from = "Series", values_from = "Value",
                       labels_from = if(any(names(data) == "Label")) "Label" else NULL,
                       expand.date = FALSE, ...) {
-  # Needed for columns to be cast in order...
-  data <- ftransformv(data, names_from, qF, sort = FALSE)
-  # if(fnunique(get_vars(data, c(names_from, id_cols))) != fnrow(data))
-  #  data <- collapv(data, c(names_from, id_cols), fmedian, ffirst, sort = FALSE, na.rm = FALSE)
-  form <- as.formula(paste0(paste_clp(id_cols), " ~ ", paste_clp(names_from)))
-  res <- dcast(qDT(data), form, value.var = values_from, sep = "_", ...) # , fun.aggregate = median, na.rm = TRUE
-  if(length(labels_from)) {
-    noid <- -seq_along(id_cols)
-    namlab <- funique(.subset(data, c(names_from, labels_from)))
-    nam <- if(length(names_from) == 1L) namlab[[1L]] else
-      do.call(paste, c(namlab[names_from], list(sep = "_"))) # make sure sep is same as dcast...
-    lab <- namlab[[labels_from]][ckmatch(names(res)[noid], nam)]
-    vlabels(res)[noid] <- if(is.character(lab)) lab else as.character(lab)
-  }
+  res <- pivot_ellipsis(data, id_cols, values_from, names_from, labels_from, how = "wider", sort = "ids", ...) # collapse::pivot
   if(expand.date) return(am_expand_date(res, ...)) else return(res)
 }
 
-# Helper used in am_pivot_wider
-paste_clp <- function(x) if(length(x) == 1L) x else paste(x, collapse = " + ")
+# This is to allow ellipsis (...) arguments to be passed to both pivot and am_expand_data
+pivot_ellipsis <- function(data, ids = NULL, values = NULL, names = NULL, labels = NULL,
+                           how = "longer", na.rm = FALSE, factor = c("names", "labels"),
+                           check.dups = FALSE, nthreads = 1L, fill = NULL,
+                           drop = TRUE, sort = FALSE, transpose = FALSE, ...) {
+  pivot(data, ids = ids, values = values, names = names,
+        labels = labels, how = how, na.rm = na.rm, factor = factor,
+        check.dups = check.dups, nthreads = nthreads, fill = fill,
+        drop = drop, sort = sort, transpose = transpose)
+}
 
 
 #' Reshape Column-Based Data to Long Format

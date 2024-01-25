@@ -19,7 +19,7 @@ A data frame with 55 (wld = 195) rows and 9 variables (sorted by Country):
   \item{Currency}{Main Official Currency}
 }
 
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 195 rows and 9 columns.
+An object of class \code{data.table} (inherits from \code{data.frame}) with 195 rows and 9 columns.
 }
 \source{
 \href{https://CRAN.R-project.org/package=countrycode}{countrycode} R package (with some modification of regional aggregates).

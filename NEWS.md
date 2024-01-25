@@ -1,3 +1,11 @@
+# africamonitor 0.2.4
+
+- The database has been moved, and the connection changed accordingly. All users should update the package, older package versions will cease to fetch data in a few months time. 
+
+- The Democratic Republic of Congo (COD) was added to the East African Community in the `am_entities` table. 
+
+- `am_pivot_wider()` has become faster by internally replacing `data.table::dcast()` by `collapse::pivot()`. 
+
 # africamonitor 0.2.3
 
 - Ensured that tests fail gracefully if database is not available. 
@@ -10,7 +18,7 @@
 
 - A like-named Python package has been made available on [PyPi](https://pypi.org/project/africamonitor/). 
 
-- A repository for bug reports has been made available on [GitHub](https://github.com/IFW-Macro-Research-Group/africamonitor/issues). The source code remains private though.  
+- A repository for bug reports has been made available on [GitHub](https://github.com/kielinstitute/africamonitor/issues). The source code remains private though.  
 
 
 # africamonitor 0.2.1

@@ -29,10 +29,10 @@ am_expand_date(
 
 \item{sort}{logical. \code{TRUE} will sort the data by the date column.}
 
-\item{as.factor}{\code{TRUE} will generate quarters, fiscal years and months ('Quarter', 'FY', 'QFY', 'Month') as factor variables. It is also possible to use \code{as.factor = "ordered"} to generate ordered factors.}
-
-\item{name}{character. The name of the date variable to expand.
+\item{as.factor}{\code{TRUE} will generate quarters, fiscal years and months ('Quarter', 'FY', 'QFY', 'Month') as factor variables. It is also possible to use \code{as.factor = "ordered"} to generate ordered factors.
 \code{FALSE} will generate fiscal years as character and quarters and months as integer variables.}
+
+\item{name}{character. The name of the date variable to expand.}
 
 \item{\dots}{not used.}
 }

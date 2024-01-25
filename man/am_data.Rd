@@ -19,7 +19,7 @@ am_data(
 )
 }
 \arguments{
-\item{ctry}{character. (Optional) the ISO3 code of countries (see \code{\link{am_countries}}).}
+\item{ctry}{character. (Optional) the ISO3 code of countries (see \code{\link{am_countries}}). Default is to load data for all African countries. Putting \code{NULL} gets data for all countries (codes available in \code{\link{am_countries_wld}}).}
 
 \item{series}{character. (Optional) codes of series matching the 'Series' column of the series table (retrieved using \code{\link[=am_series]{am_series()}}).}
 
@@ -41,7 +41,7 @@ year-quarters of the form \code{"YYYYQN"} or \code{"YYYY-QN"}, a numeric year \c
 
 \item{return.query}{logical. \code{TRUE} will not query the database but instead return the constructed SQL query as a character string (for debugging purposes).}
 
-\item{\dots}{further arguments passed to \code{\link{am_pivot_wider}} (if \code{wide = TRUE}) or \code{\link{am_expand_date}} (if \code{expand.date = TRUE}), no conflicts between these two.}
+\item{\dots}{further arguments passed to \code{\link{am_pivot_wider}} (if \code{wide = TRUE}) or \code{\link{am_expand_date}} (if \code{expand.date = TRUE}).}
 }
 \value{
 A \code{\link[data.table]{data.table}} with the result of the query.

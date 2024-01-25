@@ -45,8 +45,8 @@
 #' @importFrom stats as.formula setNames
 #' @importFrom DBI dbConnect dbGetQuery dbDisconnect
 #' @importFrom RMySQL MySQL
-#' @importFrom collapse collapv ffirst fmedian funique ftransformv get_vars get_vars<- date_vars add_vars add_vars<- cat_vars ss qF vlabels vlabels<- ckmatch qDT fnobs fnrow fncol unattrib namlab allNA
-#' @importFrom data.table setDT fifelse melt dcast transpose setcolorder
+#' @importFrom collapse pivot collapv ffirst fmedian funique ftransformv get_vars get_vars<- date_vars add_vars add_vars<- cat_vars ss qF vlabels vlabels<- ckmatch qDT fnobs fnrow fncol unattrib namlab allNA whichNA
+#' @importFrom data.table setDT fifelse melt transpose setcolorder
 # #' @importFrom writexl write_xlsx
 #'
 NULL
@@ -71,8 +71,11 @@ NULL
       dbConnect(MySQL(), user = 'IFW_READ_LOCAL', password = '$QL5Dbg8+^g`)$D.',
                 dbname = 'AFRMDB', host = 'localhost')
     } else {
-      dbConnect(MySQL(), user = 'IFW_READ', password = '$QL5Dbg8+^g`)$D.',
-                dbname = 'AFRMDB', port = 3306L, host = '65.108.142.177') # DO: 46.101.215.194
+      dbConnect(MySQL(), user = Sys.getenv("AFRM_DB_READ_USER", "AFRMREAD"),
+                password = Sys.getenv("AFRM_DB_READ_PASSWORD", "JGW0vyw1efe.utq!acd"),
+                dbname = Sys.getenv("AFRM_DB_NAME", "AFRMDB"),
+                port = as.integer(Sys.getenv("AFRM_DB_READ_PORT", "4008")),
+                host = Sys.getenv("AFRM_DB_HOST", "africamonitor-api.ifw-kiel.de"))
     }
 
   }, error = function(e) {
